@@ -44,7 +44,9 @@ export async function registerNfcTag(
   studentId: string,
   studentName: string,
   class_: string,
-  block: string
+  block: string,
+  parentEmail?: string | null,
+  grNumber?: string | null
 ) {
   const result = await updateLocalDb(async (state) => {
     const existing = state.nfcTags.find((tag) => tag.nfcCode === nfcCode)
@@ -59,6 +61,8 @@ export async function registerNfcTag(
       studentName,
       class: class_,
       block,
+      parentEmail: parentEmail || null,
+      grNumber: grNumber || null,
       createdAt: new Date().toISOString(),
     }
 
@@ -103,6 +107,8 @@ export async function bulkRegisterStudents(
           studentName: s.name,
           class: s.class || '',
           block: s.block || 'Boys Block',
+          parentEmail: (s as any).parentEmail || null,
+          grNumber: (s as any).grNumber || null,
           createdAt: new Date().toISOString(),
         })
 
@@ -122,6 +128,9 @@ export async function bulkRegisterStudents(
           status: 'waiting',
           notes: null,
           userId,
+          dispersalSessionId: null,
+          dispersalGroupId: null,
+          pickedUpAt: null,
           createdAt: new Date().toISOString(),
         })
         imported++
@@ -181,6 +190,9 @@ export async function createDismissal(
       status: 'waiting',
       notes: null,
       userId,
+      dispersalSessionId: null,
+      dispersalGroupId: null,
+      pickedUpAt: null,
       createdAt: new Date().toISOString(),
     }
 
@@ -241,6 +253,9 @@ export async function scanNfcAtGate(
           status: 'waiting',
           notes: null,
           userId: 'admin-user-final',
+          dispersalSessionId: null,
+          dispersalGroupId: null,
+          pickedUpAt: null,
           createdAt: nowIso,
         }
         state.dismissals.push(created)

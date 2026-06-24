@@ -1,7 +1,7 @@
 import { getSession } from '@/app/actions/auth'
 import { redirect } from 'next/navigation'
 import { LayoutWrapper } from '@/components/layout-wrapper'
-import { GateEntranceScanner } from '@/components/gate-entrance-scanner'
+import { DispersalConsole } from '@/components/dispersal-console'
 
 export default async function Page() {
   const session = await getSession()
@@ -12,7 +12,7 @@ export default async function Page() {
 
   return (
     <LayoutWrapper userName={session.name || 'Admin'}>
-      <GateEntranceScanner />
+      <DispersalConsole />
     </LayoutWrapper>
   )
 }

@@ -33,6 +33,8 @@ export interface LocalNfcTag {
   studentName: string
   class: string
   block: string
+  parentEmail: string | null
+  grNumber: string | null
   createdAt: string
 }
 
@@ -52,6 +54,34 @@ export interface LocalDismissal {
   status: string
   notes: string | null
   userId: string
+  dispersalSessionId: string | null
+  dispersalGroupId: string | null
+  pickedUpAt: string | null
+  createdAt: string
+}
+
+export type DispersalGroupId = 'KG' | 'G1-12' | 'B1-12'
+
+export interface DispersalSession {
+  id: string
+  groupId: DispersalGroupId
+  startedAt: string
+  endedAt: string | null
+  userId: string
+  createdAt: string
+}
+
+export interface PickupLog {
+  id: string
+  studentId: string
+  studentName: string
+  grNumber: string | null
+  class: string
+  sessionId: string
+  groupId: DispersalGroupId
+  parentEmail: string | null
+  pickedUpAt: string
+  overriddenAt: string | null
   createdAt: string
 }
 
@@ -72,6 +102,8 @@ export interface LocalDbState {
   nfcTags: LocalNfcTag[]
   dismissals: LocalDismissal[]
   staffDirectory: LocalStaffMember[]
+  dispersalSessions: DispersalSession[]
+  pickupLogs: PickupLog[]
 }
 
 const emptyState = (): LocalDbState => ({
@@ -79,6 +111,8 @@ const emptyState = (): LocalDbState => ({
   nfcTags: [],
   dismissals: [],
   staffDirectory: [],
+  dispersalSessions: [],
+  pickupLogs: [],
 })
 
 let lock = Promise.resolve()
@@ -140,9 +174,20 @@ async function loadState(): Promise<LocalDbState> {
       ...emptyState(),
       ...parsed,
       admin: parsed.admin || [],
-      nfcTags: parsed.nfcTags || [],
-      dismissals: parsed.dismissals || [],
+      nfcTags: (parsed.nfcTags || []).map((tag: any) => ({
+        ...tag,
+        parentEmail: tag.parentEmail ?? null,
+        grNumber: tag.grNumber ?? null,
+      })),
+      dismissals: (parsed.dismissals || []).map((d: any) => ({
+        ...d,
+        dispersalSessionId: d.dispersalSessionId ?? null,
+        dispersalGroupId: d.dispersalGroupId ?? null,
+        pickedUpAt: d.pickedUpAt ?? null,
+      })),
       staffDirectory: parsed.staffDirectory || [],
+      dispersalSessions: parsed.dispersalSessions || [],
+      pickupLogs: parsed.pickupLogs || [],
     }
 
     return state
