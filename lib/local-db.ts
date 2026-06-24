@@ -88,12 +88,16 @@ export interface PickupLog {
 export interface LocalStaffMember {
   id: number
   staffName: string
+  username: string | null
+  passwordHash: string | null
   role: string
   block: string | null
   phone: string | null
   email: string | null
+  nfcLoginFormat: string | null
   isActive: boolean
   userId: string
+  lastLogin: string | null
   createdAt: string
 }
 
@@ -185,7 +189,13 @@ async function loadState(): Promise<LocalDbState> {
         dispersalGroupId: d.dispersalGroupId ?? null,
         pickedUpAt: d.pickedUpAt ?? null,
       })),
-      staffDirectory: parsed.staffDirectory || [],
+      staffDirectory: (parsed.staffDirectory || []).map((s: any) => ({
+        ...s,
+        username: s.username ?? null,
+        passwordHash: s.passwordHash ?? null,
+        nfcLoginFormat: s.nfcLoginFormat ?? null,
+        lastLogin: s.lastLogin ?? null,
+      })),
       dispersalSessions: parsed.dispersalSessions || [],
       pickupLogs: parsed.pickupLogs || [],
     }

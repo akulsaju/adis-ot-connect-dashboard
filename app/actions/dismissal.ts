@@ -6,6 +6,7 @@ import {
   updateLocalDb,
   type LocalDismissal,
 } from '@/lib/local-db'
+import { getStaffSession } from './staff-auth'
 
 async function getUserId() {
   // Local single-admin store keeps the app scoped to one operator.
@@ -48,6 +49,12 @@ export async function registerNfcTag(
   parentEmail?: string | null,
   grNumber?: string | null
 ) {
+  // Gate staff cannot register NFC tags (edit student data)
+  const staffSession = await getStaffSession()
+  if (staffSession) {
+    throw new Error('Gate staff cannot register NFC tags. This is an admin-only function.')
+  }
+
   const result = await updateLocalDb(async (state) => {
     const existing = state.nfcTags.find((tag) => tag.nfcCode === nfcCode)
     if (existing) {
@@ -80,6 +87,11 @@ export async function getNfcTag(nfcCode: string) {
 export async function bulkRegisterStudents(
   students: Array<{ name: string; class: string; block: string; nfcCode: string }>
 ) {
+  // Gate staff cannot bulk register students (edit student data)
+  const staffSession = await getStaffSession()
+  if (staffSession) {
+    throw new Error('Gate staff cannot register students. This is an admin-only function.')
+  }
   const userId = await getUserId()
   let imported = 0
   let skipped = 0
@@ -171,6 +183,12 @@ export async function createDismissal(
   parentPhone: string,
   pickupMethod: string
 ) {
+  // Gate staff cannot create dismissals (edit student data)
+  const staffSession = await getStaffSession()
+  if (staffSession) {
+    throw new Error('Gate staff cannot create dismissals. This is an admin-only function.')
+  }
+
   const userId = await getUserId()
 
   const result = await updateLocalDb(async (state) => {
@@ -402,12 +420,16 @@ export async function addStaffMember(
     const created = {
       id: nextId(state.staffDirectory),
       staffName,
+      username: null,
+      passwordHash: null,
       role,
       block,
       phone,
       email,
+      nfcLoginFormat: null,
       isActive: true,
       userId: await getUserId(),
+      lastLogin: null,
       createdAt: new Date().toISOString(),
     }
 

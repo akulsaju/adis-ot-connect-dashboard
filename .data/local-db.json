@@ -1,0 +1,17 @@
+{
+  "admin": [
+    {
+      "id": 1,
+      "username": "admin",
+      "email": "admin@adis.ae",
+      "passwordHash": "$2b$10$yPr0nv1mgNh.NNa77/YHl.LSpp8ruyJWBKapzWEAN0NPQBQG0uC.G",
+      "name": "Admin Staff",
+      "createdAt": "2026-06-24T19:02:03.822Z"
+    }
+  ],
+  "nfcTags": [],
+  "dismissals": [],
+  "staffDirectory": [],
+  "dispersalSessions": [],
+  "pickupLogs": []
+}
