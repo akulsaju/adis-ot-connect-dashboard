@@ -29,8 +29,21 @@ export function GateEntranceScanner() {
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState<'success' | 'error' | ''>('')
   const readerRef = useRef<any>(null)
-  const [lastScannedCode, setLastScannedCode] = useState('')
+  const lastScanTimesRef = useRef<Record<string, number>>({})
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const extractNfcText = (records: any[]) => {
+    for (const record of records) {
+      if (record.recordType !== 'text' || !record.data) continue
+      const data = new Uint8Array(record.data)
+      if (data.length === 0) continue
+      const languageCodeLength = data[0] & 0x3f
+      const textBytes = data.slice(languageCodeLength + 1)
+      const decoded = new TextDecoder().decode(textBytes).trim()
+      if (decoded) return decoded
+    }
+    return ''
+  }
 
   // Load recent scans and detect sibling groups
   useEffect(() => {
@@ -83,21 +96,16 @@ export function GateEntranceScanner() {
         readerRef.current = reader
 
         reader.onreading = async (event: any) => {
-          const message = event.message
-          let nfcCode = ''
+          const nfcCode = extractNfcText(event.message.records)
 
-          for (const record of message.records) {
-            if (record.recordType === 'text') {
-              const textDecoder = new TextDecoder()
-              nfcCode = textDecoder.decode(record.data)
-              break
+          if (nfcCode) {
+            const now = Date.now()
+            const lastScan = lastScanTimesRef.current[nfcCode] || 0
+            if (now - lastScan < 2000) {
+              return
             }
-          }
-
-          if (nfcCode && nfcCode !== lastScannedCode) {
+            lastScanTimesRef.current[nfcCode] = now
             await handleNfcScan(nfcCode)
-            setLastScannedCode(nfcCode)
-            setTimeout(() => setLastScannedCode(''), 500)
           }
         }
 
@@ -116,7 +124,7 @@ export function GateEntranceScanner() {
     }
 
     initNFC()
-  }, [lastScannedCode])
+  }, [])
 
   const handleNfcScan = async (nfcCode: string) => {
     try {
@@ -138,7 +146,7 @@ export function GateEntranceScanner() {
 
   const handleManualInput = async () => {
     if (!manualNfc.trim()) return
-    await handleNfcScan(manualNfc)
+    await handleNfcScan(manualNfc.trim())
     setManualNfc('')
     inputRef.current?.focus()
   }

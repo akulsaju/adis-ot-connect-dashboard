@@ -189,6 +189,14 @@ export async function scanNfcAtGate(nfcCode: string) {
     )
 
     if (!dismissal) {
+      dismissal = state.dismissals.find(
+        (item) =>
+          item.studentId === tag.studentId &&
+          (item.status === 'at_gate' || item.status === 'in_queue' || item.status === 'parent_arrived')
+      )
+    }
+
+    if (!dismissal) {
       dismissal = {
         id: nextId(state.dismissals),
         studentId: tag.studentId,
@@ -210,8 +218,13 @@ export async function scanNfcAtGate(nfcCode: string) {
       state.dismissals.push(dismissal)
     }
 
+    dismissal.studentName = tag.studentName
+    dismissal.class = tag.class || dismissal.class || ''
+    dismissal.block = tag.block || dismissal.block || ''
     dismissal.gateScanTime = new Date().toISOString()
-    dismissal.status = 'at_gate'
+    if (dismissal.status === 'waiting') {
+      dismissal.status = 'at_gate'
+    }
     return dismissal
   })
   return serializeDismissal(updated)
