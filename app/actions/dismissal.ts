@@ -1,15 +1,31 @@
 'use server'
-
-import { db } from '@/lib/db'
-import { dismissals, nfcTags, staffDirectory } from '@/lib/db/schema'
-import { eq, and, desc, inArray } from 'drizzle-orm'
-import { cookies } from 'next/headers'
-import { revalidatePath } from 'next/cache'
+import {
+  DEFAULT_ADMIN_USERNAME,
+  findAdminByLogin,
+  nextId,
+  readLocalDb,
+  sortByCreatedAtDesc,
+  updateLocalDb,
+} from '@/lib/local-db'
 
 async function getUserId() {
-  // Simple login uses admin user ID from database
-  // In a real app, this would be stored in session/JWT
+  // Local single-admin store keeps the app scoped to one operator.
   return 'admin-user-final'
+}
+
+function toIso(value?: Date | string | null) {
+  if (!value) return null
+  return value instanceof Date ? value.toISOString() : value
+}
+
+function serializeDismissal<T extends { [key: string]: any }>(record: T) {
+  return {
+    ...record,
+    nfcScanTime: record.nfcScanTime ?? null,
+    gateScanTime: record.gateScanTime ?? null,
+    groundOpsTime: record.groundOpsTime ?? null,
+    finalDismissalTime: record.finalDismissalTime ?? null,
+  }
 }
 
 // NFC operations
@@ -20,28 +36,31 @@ export async function registerNfcTag(
   class_: string,
   block: string
 ) {
-  const userId = await getUserId()
-  
-  const result = await db
-    .insert(nfcTags)
-    .values({
+  const result = await updateLocalDb(async (state) => {
+    const existing = state.nfcTags.find((tag) => tag.nfcCode === nfcCode)
+    if (existing) {
+      throw new Error('NFC code already exists')
+    }
+
+    const created = {
+      id: nextId(state.nfcTags),
       nfcCode,
       studentId,
       studentName,
       class: class_,
       block,
-    })
-    .returning()
-  
-  revalidatePath('/command-center')
-  return result[0]
+      createdAt: new Date().toISOString(),
+    }
+
+    state.nfcTags.push(created)
+    return created
+  })
+  return result
 }
 
 export async function getNfcTag(nfcCode: string) {
-  const tag = await db.query.nfcTags.findFirst({
-    where: eq(nfcTags.nfcCode, nfcCode),
-  })
-  return tag || null
+  const state = await readLocalDb()
+  return state.nfcTags.find((tag) => tag.nfcCode === nfcCode) || null
 }
 
 export async function bulkRegisterStudents(
@@ -52,74 +71,75 @@ export async function bulkRegisterStudents(
   let skipped = 0
   const errors: string[] = []
 
-  for (const s of students) {
-    if (!s.name || !s.nfcCode) {
-      skipped++
-      continue
-    }
-    try {
-      // Skip if NFC code already exists
-      const existing = await db.query.nfcTags.findFirst({
-        where: eq(nfcTags.nfcCode, s.nfcCode),
-      })
-      if (existing) {
+  await updateLocalDb(async (state) => {
+    for (const s of students) {
+      if (!s.name || !s.nfcCode) {
         skipped++
         continue
       }
 
-      const studentId = `STU-${Date.now()}-${Math.floor(Math.random() * 1000)}`
-      await db.insert(nfcTags).values({
-        nfcCode: s.nfcCode,
-        studentId,
-        studentName: s.name,
-        class: s.class || '',
-        block: s.block || 'Boys Block',
-      })
+      try {
+        const existing = state.nfcTags.find((tag) => tag.nfcCode === s.nfcCode)
+        if (existing) {
+          skipped++
+          continue
+        }
 
-      // Also create a dismissal record so students show in registry
-      await db.insert(dismissals).values({
-        studentId,
-        studentName: s.name,
-        class: s.class || '',
-        block: s.block || 'Boys Block',
-        parentName: '',
-        parentPhone: '',
-        pickupMethod: 'walk',
-        userId,
-        status: 'waiting',
-      })
-      imported++
-    } catch (err) {
-      errors.push(`${s.name}: ${err instanceof Error ? err.message : 'failed'}`)
-      skipped++
+        const studentId = `STU-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+        state.nfcTags.push({
+          id: nextId(state.nfcTags),
+          nfcCode: s.nfcCode,
+          studentId,
+          studentName: s.name,
+          class: s.class || '',
+          block: s.block || 'Boys Block',
+          createdAt: new Date().toISOString(),
+        })
+
+        state.dismissals.push({
+          id: nextId(state.dismissals),
+          studentId,
+          studentName: s.name,
+          class: s.class || '',
+          block: s.block || 'Boys Block',
+          parentName: '',
+          parentPhone: '',
+          pickupMethod: 'walk',
+          nfcScanTime: new Date().toISOString(),
+          gateScanTime: null,
+          groundOpsTime: null,
+          finalDismissalTime: null,
+          status: 'waiting',
+          notes: null,
+          userId,
+          createdAt: new Date().toISOString(),
+        })
+        imported++
+      } catch (err) {
+        errors.push(`${s.name}: ${err instanceof Error ? err.message : 'failed'}`)
+        skipped++
+      }
     }
-  }
-
-  revalidatePath('/student-registry')
-  revalidatePath('/command-center')
+  })
   return { imported, skipped, errors }
 }
 
 export async function regenerateNfcCode(studentName: string, newNfcCode: string) {
-  // Find existing NFC tag for this student
-  const existingTag = await db.query.nfcTags.findFirst({
-    where: eq(nfcTags.studentName, studentName),
+  const updated = await updateLocalDb(async (state) => {
+    const existingTag = state.nfcTags.find((tag) => tag.studentName === studentName)
+
+    if (!existingTag) {
+      throw new Error('Student not found in NFC database')
+    }
+
+    if (state.nfcTags.some((tag) => tag.nfcCode === newNfcCode && tag.id !== existingTag.id)) {
+      throw new Error('NFC code already exists')
+    }
+
+    existingTag.nfcCode = newNfcCode
+    return existingTag
   })
-  
-  if (!existingTag) {
-    throw new Error('Student not found in NFC database')
-  }
-  
-  // Update with new NFC code
-  const updated = await db
-    .update(nfcTags)
-    .set({ nfcCode: newNfcCode })
-    .where(eq(nfcTags.id, existingTag.id))
-    .returning()
-  
-  revalidatePath('/student-registry')
-  revalidatePath('/gate-entrance')
-  return updated[0]
+  return updated
 }
 
 // Dismissal operations
@@ -133,10 +153,10 @@ export async function createDismissal(
   pickupMethod: string
 ) {
   const userId = await getUserId()
-  
-  const result = await db
-    .insert(dismissals)
-    .values({
+
+  const result = await updateLocalDb(async (state) => {
+    const created = {
+      id: nextId(state.dismissals),
       studentId,
       studentName,
       class: class_,
@@ -144,56 +164,59 @@ export async function createDismissal(
       parentName,
       parentPhone,
       pickupMethod,
-      userId,
+      nfcScanTime: new Date().toISOString(),
+      gateScanTime: null,
+      groundOpsTime: null,
+      finalDismissalTime: null,
       status: 'waiting',
-    })
-    .returning()
-  
-  revalidatePath('/command-center')
-  revalidatePath('/ground-ops')
-  return result[0]
+      notes: null,
+      userId,
+      createdAt: new Date().toISOString(),
+    }
+
+    state.dismissals.push(created)
+    return created
+  })
+  return serializeDismissal(result)
 }
 
 export async function scanNfcAtGate(nfcCode: string) {
-  const userId = await getUserId()
   const tag = await getNfcTag(nfcCode)
-  
+
   if (!tag) throw new Error('NFC tag not found')
-  
-  // Check if dismissal exists, if not create it
-  let dismissal = await db.query.dismissals.findFirst({
-    where: and(
-      eq(dismissals.studentId, tag.studentId),
-      eq(dismissals.status, 'waiting')
-    ),
-  })
-  
-  if (!dismissal) {
-    const created = await createDismissal(
-      tag.studentId,
-      tag.studentName,
-      tag.class || '',
-      tag.block || '',
-      '',
-      '',
-      'walk'
+
+  const updated = await updateLocalDb(async (state) => {
+    let dismissal = state.dismissals.find(
+      (item) => item.studentId === tag.studentId && item.status === 'waiting'
     )
-    dismissal = created
-  }
-  
-  // Update status to at_gate
-  const updated = await db
-    .update(dismissals)
-    .set({
-      gateScanTime: new Date(),
-      status: 'at_gate',
-    })
-    .where(eq(dismissals.id, dismissal.id))
-    .returning()
-  
-  revalidatePath('/gate-entrance')
-  revalidatePath('/command-center')
-  return updated[0]
+
+    if (!dismissal) {
+      dismissal = {
+        id: nextId(state.dismissals),
+        studentId: tag.studentId,
+        studentName: tag.studentName,
+        class: tag.class || '',
+        block: tag.block || '',
+        parentName: '',
+        parentPhone: '',
+        pickupMethod: 'walk',
+        nfcScanTime: new Date().toISOString(),
+        gateScanTime: null,
+        groundOpsTime: null,
+        finalDismissalTime: null,
+        status: 'waiting',
+        notes: null,
+        userId: await getUserId(),
+        createdAt: new Date().toISOString(),
+      }
+      state.dismissals.push(dismissal)
+    }
+
+    dismissal.gateScanTime = new Date().toISOString()
+    dismissal.status = 'at_gate'
+    return dismissal
+  })
+  return serializeDismissal(updated)
 }
 
 export async function updateDismissalStatus(
@@ -201,57 +224,47 @@ export async function updateDismissalStatus(
   newStatus: string,
   updates?: Record<string, any>
 ) {
-  const userId = await getUserId()
-  
-  const updateData: any = { status: newStatus }
-  
-  if (newStatus === 'parent_arrived') {
-    updateData.groundOpsTime = new Date()
-  } else if (newStatus === 'completed') {
-    updateData.finalDismissalTime = new Date()
-  }
-  
-  if (updates) {
-    Object.assign(updateData, updates)
-  }
-  
-  const updated = await db
-    .update(dismissals)
-    .set(updateData)
-    .where(eq(dismissals.id, dismissalId))
-    .returning()
-  
-  revalidatePath('/command-center')
-  revalidatePath('/ground-ops')
-  return updated[0]
+  const updated = await updateLocalDb(async (state) => {
+    const dismissal = state.dismissals.find((item) => item.id === dismissalId)
+
+    if (!dismissal) {
+      throw new Error('Dismissal not found')
+    }
+
+    dismissal.status = newStatus
+
+    if (newStatus === 'parent_arrived') {
+      dismissal.groundOpsTime = new Date().toISOString()
+    } else if (newStatus === 'completed') {
+      dismissal.finalDismissalTime = new Date().toISOString()
+    }
+
+    if (updates) {
+      for (const [key, value] of Object.entries(updates)) {
+        ;(dismissal as Record<string, any>)[key] = toIso(value)
+      }
+    }
+
+    return dismissal
+  })
+  return serializeDismissal(updated)
 }
 
 export async function getDismissalsByStatus(status: string) {
-  const userId = await getUserId()
-  
-  return db.query.dismissals.findMany({
-    where: and(
-      eq(dismissals.status, status),
-      eq(dismissals.userId, userId)
-    ),
-    orderBy: [desc(dismissals.createdAt)],
-  })
+  const state = await readLocalDb()
+  return sortByCreatedAtDesc(
+    state.dismissals.filter((dismissal) => dismissal.status === status)
+  ).map(serializeDismissal)
 }
 
 export async function getAllDismissals() {
-  const userId = await getUserId()
-  
-  return db.query.dismissals.findMany({
-    where: eq(dismissals.userId, userId),
-    orderBy: [desc(dismissals.createdAt)],
-  })
+  const state = await readLocalDb()
+  return sortByCreatedAtDesc(state.dismissals).map(serializeDismissal)
 }
 
 export async function getDismissalStats() {
-  const userId = await getUserId()
-  
   const allDismissals = await getAllDismissals()
-  
+
   return {
     total: allDismissals.length,
     waiting: allDismissals.filter((d) => d.status === 'waiting').length,
@@ -270,31 +283,28 @@ export async function addStaffMember(
   phone: string,
   email: string
 ) {
-  const userId = await getUserId()
-  
-  const result = await db
-    .insert(staffDirectory)
-    .values({
+  const result = await updateLocalDb(async (state) => {
+    const created = {
+      id: nextId(state.staffDirectory),
       staffName,
       role,
       block,
       phone,
       email,
-      userId,
-    })
-    .returning()
-  
-  revalidatePath('/staff-directory')
-  return result[0]
+      isActive: true,
+      userId: await getUserId(),
+      createdAt: new Date().toISOString(),
+    }
+
+    state.staffDirectory.push(created)
+    return created
+  })
+  return result
 }
 
 export async function getStaffDirectory() {
-  const userId = await getUserId()
-  
-  return db.query.staffDirectory.findMany({
-    where: and(
-      eq(staffDirectory.userId, userId),
-      eq(staffDirectory.isActive, true)
-    ),
-  })
+  const state = await readLocalDb()
+  return sortByCreatedAtDesc(
+    state.staffDirectory.filter((member) => member.isActive)
+  )
 }
