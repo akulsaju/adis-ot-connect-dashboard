@@ -36,7 +36,20 @@ export function CommandCenterDashboard() {
   const [nfcEnabled, setNfcEnabled] = useState(false)
   const [nfcStatus, setNfcStatus] = useState('Initializing NFC...')
   const readerRef = useRef<any>(null)
-  const [lastScannedCode, setLastScannedCode] = useState('')
+  const lastScanTimesRef = useRef<Record<string, number>>({})
+
+  const extractNfcText = (records: any[]) => {
+    for (const record of records) {
+      if (record.recordType !== 'text' || !record.data) continue
+      const data = new Uint8Array(record.data)
+      if (data.length === 0) continue
+      const languageCodeLength = data[0] & 0x3f
+      const textBytes = data.slice(languageCodeLength + 1)
+      const decoded = new TextDecoder().decode(textBytes).trim()
+      if (decoded) return decoded
+    }
+    return ''
+  }
 
   // Load data with real-time polling
   useEffect(() => {
@@ -76,19 +89,15 @@ export function CommandCenterDashboard() {
         readerRef.current = reader
 
         reader.onreading = async (event: any) => {
-          const message = event.message
-          let nfcCode = ''
+          const nfcCode = extractNfcText(event.message.records)
 
-          for (const record of message.records) {
-            if (record.recordType === 'text') {
-              const textDecoder = new TextDecoder()
-              nfcCode = textDecoder.decode(record.data)
-              break
+          if (nfcCode) {
+            const now = Date.now()
+            const lastScan = lastScanTimesRef.current[nfcCode] || 0
+            if (now - lastScan < 2000) {
+              return
             }
-          }
-
-          if (nfcCode && nfcCode !== lastScannedCode) {
-            setLastScannedCode(nfcCode)
+            lastScanTimesRef.current[nfcCode] = now
             setNfcStatus(`Scanned: ${nfcCode}`)
 
             try {
@@ -102,8 +111,6 @@ export function CommandCenterDashboard() {
               ])
               setDismissals(allDismissals as Dismissal[])
               setStats(currentStats)
-
-              setTimeout(() => setLastScannedCode(''), 500)
             } catch (error: any) {
               setNfcStatus(`Error: ${error.message}`)
             }
@@ -125,7 +132,7 @@ export function CommandCenterDashboard() {
     }
 
     initNFC()
-  }, [lastScannedCode])
+  }, [])
 
   const handleExportDismissals = () => {
     const headers = [
