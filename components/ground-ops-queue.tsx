@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { getDismissalsByStatus, updateDismissalStatus } from '@/app/actions/dismissal'
-import { CheckCircle2, Clock, Users } from 'lucide-react'
+import { CheckCircle2, Clock, Users, Filter, ClipboardList } from 'lucide-react'
 
 interface Dismissal {
   id: number
@@ -95,20 +95,34 @@ export function GroundOpsQueue() {
   }
 
   return (
-    <div className="flex-1 overflow-auto p-8 space-y-8">
-      <div>
-        <h2 className="text-4xl font-bold text-primary mb-2">Ground Operations</h2>
-        <p className="text-muted-foreground">Manage student dismissal queue by holding area and verify parent arrivals</p>
+    <div className="flex-1 overflow-auto p-6 sm:p-8 space-y-6 lg:space-y-8">
+      <div className="rounded-[2rem] border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Ground control</p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Ground Operations</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Manage the dismissal queue by holding area and verify parent arrivals.
+            </p>
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background px-4 py-2 text-sm text-muted-foreground">
+            <ClipboardList className="h-4 w-4 text-primary" />
+            Queue management
+          </div>
+        </div>
       </div>
 
-      {/* Block Filter */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex flex-wrap gap-2 rounded-[1.5rem] border border-border/60 bg-card p-3 shadow-sm">
+        <div className="flex items-center gap-2 px-2 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+          <Filter className="h-3.5 w-3.5" />
+          Filter by block
+        </div>
         <button
           onClick={() => setSelectedBlock(null)}
-          className={`px-4 py-2 rounded-lg font-medium text-sm transition ${
+          className={`rounded-full px-4 py-2 text-sm font-medium transition ${
             selectedBlock === null
-              ? 'bg-primary text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'bg-muted text-muted-foreground hover:bg-muted/80'
           }`}
         >
           All Blocks ({queue.length})
@@ -117,10 +131,10 @@ export function GroundOpsQueue() {
           <button
             key={block}
             onClick={() => setSelectedBlock(block)}
-            className={`px-4 py-2 rounded-lg font-medium text-sm transition ${
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               selectedBlock === block
-                ? 'bg-primary text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
             }`}
           >
             {block} ({queueByBlock[block].length})
@@ -128,46 +142,47 @@ export function GroundOpsQueue() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Queue Card */}
-        <div className="lg:col-span-2 bg-white rounded-lg border border-primary/10 shadow-sm">
-          <div className="p-6 border-b border-primary/5 bg-gradient-to-r from-sky-50 to-blue-50">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 overflow-hidden rounded-[1.75rem] border border-border/60 bg-card shadow-sm">
+          <div className="border-b border-border/60 bg-gradient-to-r from-sky-50 to-white p-6">
             <div className="flex items-center gap-3">
-              <Users className="w-6 h-6 text-primary" />
+              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/10 text-primary">
+                <Users className="h-5 w-5" />
+              </div>
               <div>
-                <h3 className="text-xl font-bold text-primary">Current Queue</h3>
-                <p className="text-sm text-muted-foreground mt-1">{queue.length} students waiting</p>
+                <h3 className="text-xl font-semibold text-foreground">Current Queue</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{queue.length} students waiting</p>
               </div>
             </div>
           </div>
 
-          <div className="divide-y divide-primary/5 max-h-96 overflow-y-auto">
+          <div className="divide-y divide-border/60 max-h-96 overflow-y-auto">
             {loading ? (
               <div className="p-8 text-center text-muted-foreground">Loading queue...</div>
             ) : queue.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground">Queue is empty</div>
             ) : (
               queue.map((item) => (
-                <div key={item.id} className="p-4 hover:bg-primary/2 transition-colors">
-                  <div className="flex items-start justify-between mb-3">
+                <div key={item.id} className="p-5 hover:bg-muted/40 transition-colors">
+                  <div className="mb-3 flex items-start justify-between">
                     <div>
-                      <p className="font-semibold text-lg">{item.studentName}</p>
+                      <p className="text-lg font-semibold text-foreground">{item.studentName}</p>
                       <p className="text-sm text-muted-foreground">{item.class} | {item.block}</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${item.pickupMethod === 'walk' ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'}`}>
+                    <span className={`rounded-full px-3 py-1 text-xs font-medium ${item.pickupMethod === 'walk' ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'}`}>
                       {item.pickupMethod.charAt(0).toUpperCase() + item.pickupMethod.slice(1)}
                     </span>
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleParentArrived(item.id)}
-                      className="flex-1 px-3 py-2 bg-amber-100 text-amber-900 hover:bg-amber-200 rounded font-medium text-sm transition"
+                      className="flex-1 rounded-xl bg-amber-100 px-3 py-2.5 text-sm font-medium text-amber-900 transition hover:bg-amber-200"
                     >
                       Parent Arrived
                     </button>
                     <button
                       onClick={() => handleDismissed(item.id)}
-                      className="flex-1 px-3 py-2 bg-emerald-100 text-emerald-900 hover:bg-emerald-200 rounded font-medium text-sm transition"
+                      className="flex-1 rounded-xl bg-emerald-100 px-3 py-2.5 text-sm font-medium text-emerald-900 transition hover:bg-emerald-200"
                     >
                       Dismissed
                     </button>
@@ -178,26 +193,27 @@ export function GroundOpsQueue() {
           </div>
         </div>
 
-        {/* Completed Card */}
-        <div className="bg-white rounded-lg border border-primary/10 shadow-sm">
-          <div className="p-6 border-b border-primary/5 bg-gradient-to-r from-emerald-50 to-green-50">
+        <div className="overflow-hidden rounded-[1.75rem] border border-border/60 bg-card shadow-sm">
+          <div className="border-b border-border/60 bg-gradient-to-r from-emerald-50 to-white p-6">
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-100 text-emerald-700">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
               <div>
-                <h3 className="text-lg font-bold text-emerald-900">Completed Today</h3>
-                <p className="text-2xl font-bold text-emerald-600 mt-1">{completed.length}</p>
+                <h3 className="text-lg font-semibold text-foreground">Completed Today</h3>
+                <p className="mt-1 text-2xl font-semibold text-emerald-600">{completed.length}</p>
               </div>
             </div>
           </div>
 
-          <div className="p-4 space-y-2 max-h-80 overflow-y-auto">
+          <div className="max-h-80 space-y-2 overflow-y-auto p-4">
             {completed.slice(0, 10).map((item) => (
-              <div key={item.id} className="text-sm pb-2 border-b border-primary/5 last:border-b-0">
-                <p className="font-semibold">{item.studentName}</p>
+              <div key={item.id} className="border-b border-border/60 pb-3 last:border-b-0 last:pb-0">
+                <p className="text-sm font-medium text-foreground">{item.studentName}</p>
                 <p className="text-xs text-muted-foreground">{item.class}</p>
               </div>
             ))}
-            {completed.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No dismissals yet</p>}
+            {completed.length === 0 && <p className="py-4 text-center text-sm text-muted-foreground">No dismissals yet</p>}
           </div>
         </div>
       </div>

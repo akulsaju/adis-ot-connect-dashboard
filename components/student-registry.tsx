@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { getAllDismissals, registerNfcTag, regenerateNfcCode, bulkRegisterStudents } from '@/app/actions/dismissal'
 import { parseCSV, generateCSV, downloadCSV } from '@/lib/csv-utils'
+import { Upload, Download, FileText, Users, BadgeInfo } from 'lucide-react'
 
 interface Student {
   id: number
@@ -205,75 +206,64 @@ export function StudentRegistry() {
   }
 
   return (
-    <div className="flex-1 overflow-auto p-8 space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h2 className="text-4xl font-bold text-primary mb-2">Student Registry</h2>
-          <p className="text-muted-foreground">Register NFC tags and manage student database</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            onChange={handleImportCSV}
-            className="hidden"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={importing}
-            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 font-semibold text-sm disabled:opacity-50 transition"
-          >
-            {importing ? 'Importing...' : 'Import CSV'}
-          </button>
-          <button
-            onClick={handleExportCSV}
-            className="px-4 py-2 border border-primary/30 text-primary rounded-lg hover:bg-primary/5 font-semibold text-sm transition"
-          >
-            Export CSV
-          </button>
-          <button
-            onClick={handleDownloadTemplate}
-            className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 font-semibold text-sm transition"
-          >
-            Template
-          </button>
+    <div className="flex-1 overflow-auto p-6 sm:p-8 space-y-6 lg:space-y-8">
+      <div className="rounded-[2rem] border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Registry</p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Student Registry</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Register NFC tags and manage the student database.
+            </p>
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background px-4 py-2 text-sm text-muted-foreground">
+            <Users className="h-4 w-4 text-primary" />
+            {students.length} registered students
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Add New Student Form */}
-        <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-6">
-          <h3 className="text-xl font-bold text-primary mb-4">Register New Student</h3>
-          <form onSubmit={handleAddStudent} className="space-y-4">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="rounded-[1.75rem] border border-border/60 bg-card p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <FileText className="h-5 w-5" />
+            </div>
             <div>
-              <label className="text-sm font-semibold block mb-2">Student Name</label>
+              <h3 className="text-xl font-semibold text-foreground">Register New Student</h3>
+              <p className="text-sm text-muted-foreground">Add NFC credentials and class details.</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleAddStudent} className="mt-6 space-y-4">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-foreground">Student Name</label>
               <input
                 type="text"
                 value={newStudent.name}
                 onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
-                className="w-full px-3 py-2 border border-primary/20 rounded-lg focus:outline-none focus:border-primary"
+                className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                 placeholder="Full name"
               />
             </div>
 
             <div>
-              <label className="text-sm font-semibold block mb-2">Class</label>
+              <label className="mb-2 block text-sm font-medium text-foreground">Class</label>
               <input
                 type="text"
                 value={newStudent.class}
                 onChange={(e) => setNewStudent({ ...newStudent, class: e.target.value })}
-                className="w-full px-3 py-2 border border-primary/20 rounded-lg focus:outline-none focus:border-primary"
+                className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                 placeholder="e.g., Grade 5A"
               />
             </div>
 
             <div>
-              <label className="text-sm font-semibold block mb-2">Block</label>
+              <label className="mb-2 block text-sm font-medium text-foreground">Block</label>
               <select
                 value={newStudent.block}
                 onChange={(e) => setNewStudent({ ...newStudent, block: e.target.value })}
-                className="w-full px-3 py-2 border border-primary/20 rounded-lg focus:outline-none focus:border-primary"
+                className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
               >
                 <option>KG</option>
                 <option>Girls Block</option>
@@ -282,47 +272,86 @@ export function StudentRegistry() {
             </div>
 
             <div>
-              <label className="text-sm font-semibold block mb-2">NFC Code</label>
+              <label className="mb-2 block text-sm font-medium text-foreground">NFC Code</label>
               <input
                 type="text"
                 value={newStudent.nfcCode}
                 onChange={(e) => setNewStudent({ ...newStudent, nfcCode: e.target.value })}
-                className="w-full px-3 py-2 border border-primary/20 rounded-lg focus:outline-none focus:border-primary"
+                className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                 placeholder="Scan or enter NFC ID"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 font-semibold"
+              className="h-11 w-full rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
             >
               Register Student
             </button>
           </form>
         </div>
 
-        {/* Students List */}
-        <div className="lg:col-span-2 bg-white rounded-lg border border-primary/10 shadow-sm">
-          <div className="p-6 border-b border-primary/5">
-            <h3 className="text-xl font-bold text-primary">Registered Students ({filteredStudents.length})</h3>
+        <div className="lg:col-span-2 overflow-hidden rounded-[1.75rem] border border-border/60 bg-card shadow-sm">
+          <div className="flex flex-col gap-4 border-b border-border/60 p-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-semibold text-foreground">Registered Students ({filteredStudents.length})</h3>
+                <p className="mt-1 text-sm text-muted-foreground">Search, filter, export, and rewrite NFC codes.</p>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                <BadgeInfo className="h-4 w-4 text-primary" />
+                Updated from dismissal records
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleImportCSV}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importing}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-50"
+              >
+                <Upload className="h-4 w-4" />
+                {importing ? 'Importing...' : 'Import CSV'}
+              </button>
+              <button
+                onClick={handleExportCSV}
+                className="inline-flex items-center gap-2 rounded-xl border border-border/70 bg-background px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted/60"
+              >
+                <Download className="h-4 w-4" />
+                Export CSV
+              </button>
+              <button
+                onClick={handleDownloadTemplate}
+                className="inline-flex items-center gap-2 rounded-xl border border-border/70 bg-background px-4 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-muted/60"
+              >
+                <FileText className="h-4 w-4" />
+                Template
+              </button>
+            </div>
           </div>
 
-          {/* Search and Filter */}
-          <div className="p-4 border-b border-primary/5 space-y-4">
+          <div className="border-b border-border/60 p-4 space-y-4">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by name or class..."
-              className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:outline-none focus:border-primary"
+              className="h-11 w-full rounded-xl border border-input bg-background px-4 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
             />
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setFilterBlock(null)}
-                className={`px-3 py-1 rounded text-sm font-medium transition ${
+                className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
                   filterBlock === null
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 }`}
               >
                 All Blocks
@@ -331,10 +360,10 @@ export function StudentRegistry() {
                 <button
                   key={block}
                   onClick={() => setFilterBlock(block)}
-                  className={`px-3 py-1 rounded text-sm font-medium transition ${
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
                     filterBlock === block
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
                   }`}
                 >
                   {block}
@@ -352,28 +381,28 @@ export function StudentRegistry() {
               <div className="p-8 text-center text-muted-foreground">No students match your search</div>
             ) : (
               <table className="w-full">
-                <thead className="bg-primary/5 border-b border-primary/10">
-                  <tr className="text-left text-sm font-semibold text-primary">
+                <thead className="bg-muted/50 border-b border-border/60">
+                  <tr className="text-left text-sm font-medium text-foreground">
                     <th className="px-6 py-3">Student Name</th>
                     <th className="px-6 py-3">Class</th>
                     <th className="px-6 py-3">Block</th>
                     <th className="px-6 py-3 text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-primary/5">
+                <tbody className="divide-y divide-border/60">
                   {filteredStudents.map((student) => (
-                    <tr key={student.id} className="hover:bg-primary/2 transition-colors">
-                      <td className="px-6 py-3 font-medium">{student.studentName}</td>
+                    <tr key={student.id} className="hover:bg-muted/40 transition-colors">
+                      <td className="px-6 py-3 font-medium text-foreground">{student.studentName}</td>
                       <td className="px-6 py-3 text-sm text-muted-foreground">{student.class}</td>
                       <td className="px-6 py-3">
-                        <span className="inline-flex px-2 py-1 rounded text-xs font-semibold bg-primary/10 text-primary">
+                        <span className="inline-flex rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
                           {student.block}
                         </span>
                       </td>
                       <td className="px-6 py-3 text-center">
                         <button
                           onClick={() => setRegenerateModal({ open: true, student })}
-                          className="px-3 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
+                          className="rounded-xl bg-blue-100 px-3 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-200"
                         >
                           Rewrite NFC
                         </button>
@@ -387,23 +416,22 @@ export function StudentRegistry() {
         </div>
       </div>
 
-      {/* Regenerate NFC Modal */}
       {regenerateModal.open && regenerateModal.student && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 space-y-4">
-            <h3 className="text-2xl font-bold text-primary">Rewrite NFC Code</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md space-y-4 rounded-[1.5rem] border border-border/60 bg-card p-6 shadow-xl">
+            <h3 className="text-2xl font-semibold text-foreground">Rewrite NFC Code</h3>
             <p className="text-sm text-muted-foreground">
-              Regenerate NFC code for <span className="font-semibold">{regenerateModal.student.studentName}</span>
+              Regenerate NFC code for <span className="font-semibold text-foreground">{regenerateModal.student.studentName}</span>
             </p>
 
             <div>
-              <label className="text-sm font-semibold block mb-2">New NFC Code</label>
+              <label className="mb-2 block text-sm font-medium text-foreground">New NFC Code</label>
               <input
                 type="text"
                 value={newNfcCode}
                 onChange={(e) => setNewNfcCode(e.target.value)}
                 placeholder="Scan or enter new NFC ID"
-                className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:outline-none focus:border-primary"
+                className="h-11 w-full rounded-xl border border-input bg-background px-4 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                 autoFocus
               />
             </div>
@@ -414,13 +442,13 @@ export function StudentRegistry() {
                   setRegenerateModal({ open: false, student: null })
                   setNewNfcCode('')
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-semibold transition"
+                className="flex-1 rounded-xl border border-border/70 bg-background px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted/60"
               >
                 Cancel
               </button>
               <button
                 onClick={handleRegenerateNfc}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold transition"
+                className="flex-1 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
               >
                 Rewrite
               </button>

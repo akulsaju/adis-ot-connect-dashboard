@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { scanNfcAtGate, getDismissalsByStatus } from '@/app/actions/dismissal'
-import { Wifi, WifiOff, Radio, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Wifi, WifiOff, Radio, AlertCircle, CheckCircle2, ScanFace, Users, BadgeInfo } from 'lucide-react'
 
 interface Dismissal {
   id: number
@@ -144,69 +144,92 @@ export function GateEntranceScanner() {
   }
 
   return (
-    <div className="flex-1 overflow-auto p-8 space-y-8">
-      {/* Header */}
-      <div>
-        <h2 className="text-4xl font-bold text-primary mb-2">Gate Entrance Scanner</h2>
-        <p className="text-muted-foreground">NFC-based student arrival scanning at main gate</p>
-      </div>
-
-      {/* NFC Status */}
-      <div className={`rounded-lg border-2 p-6 ${nfcEnabled ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {nfcEnabled ? <Wifi className="w-6 h-6 text-emerald-600 animate-pulse" /> : <WifiOff className="w-6 h-6 text-amber-600" />}
-            <div>
-              <p className="font-semibold text-lg">{nfcEnabled ? 'NFC Reader Active' : 'NFC Initializing'}</p>
-              <p className="text-sm text-muted-foreground">{nfcStatus}</p>
-            </div>
+    <div className="flex-1 overflow-auto p-6 sm:p-8 space-y-6 lg:space-y-8">
+      <div className="rounded-[2rem] border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Gate operations</p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Gate Entrance Scanner</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              NFC-based student arrival scanning at the main gate.
+            </p>
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background px-4 py-2 text-sm text-muted-foreground">
+            <ScanFace className="h-4 w-4 text-primary" />
+            Fast arrival intake
           </div>
         </div>
       </div>
 
-      {/* Manual Entry Fallback */}
-      <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-6">
-        <h3 className="font-semibold text-primary mb-4">Manual NFC Code Entry (Fallback)</h3>
-        <div className="flex gap-3">
-          <input
-            ref={inputRef}
-            type="text"
-            value={manualNfc}
-            onChange={(e) => setManualNfc(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleManualInput()}
-            placeholder="Enter NFC code or scan here..."
-            className="flex-1 px-4 py-2 border border-primary/20 rounded-lg focus:outline-none focus:border-primary"
-          />
-          <button
-            onClick={handleManualInput}
-            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 font-semibold"
-          >
-            Scan
-          </button>
+      <div className={`rounded-[1.5rem] border p-6 shadow-sm ${nfcEnabled ? 'border-emerald-200 bg-emerald-50/70' : 'border-amber-200 bg-amber-50/70'}`}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`grid h-12 w-12 place-items-center rounded-2xl ${nfcEnabled ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+              {nfcEnabled ? <Wifi className="h-5 w-5 animate-pulse" /> : <WifiOff className="h-5 w-5" />}
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-foreground">{nfcEnabled ? 'NFC Reader Active' : 'NFC Initializing'}</p>
+              <p className="text-sm text-muted-foreground">{nfcStatus}</p>
+            </div>
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+            <BadgeInfo className="h-4 w-4 text-primary" />
+            {nfcEnabled ? 'Ready to scan' : 'Waiting for reader'}
+          </div>
         </div>
       </div>
 
-      {/* Last Scan Message */}
-      {message && (
-        <div className={`rounded-lg border-2 p-4 flex items-center gap-3 ${messageType === 'success' ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
-          {messageType === 'success' ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <AlertCircle className="w-5 h-5 text-red-600" />}
-          <p className={`font-semibold ${messageType === 'success' ? 'text-emerald-900' : 'text-red-900'}`}>{message}</p>
-        </div>
-      )}
+      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <div className="rounded-[1.5rem] border border-border/60 bg-card p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
+              <Users className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Manual NFC Code Entry</h3>
+              <p className="text-sm text-muted-foreground">Fallback input for assisted scanning.</p>
+            </div>
+          </div>
 
-      {/* Sibling Groups Alert */}
+          <div className="mt-5 flex gap-3">
+            <input
+              ref={inputRef}
+              type="text"
+              value={manualNfc}
+              onChange={(e) => setManualNfc(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleManualInput()}
+              placeholder="Enter NFC code or scan here..."
+              className="h-11 flex-1 rounded-xl border border-input bg-background px-4 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+            />
+            <button
+              onClick={handleManualInput}
+              className="rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
+            >
+              Scan
+            </button>
+          </div>
+        </div>
+
+        {message && (
+          <div className={`rounded-[1.5rem] border p-4 flex items-center gap-3 ${messageType === 'success' ? 'border-emerald-200 bg-emerald-50/70' : 'border-red-200 bg-red-50/70'}`}>
+            {messageType === 'success' ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <AlertCircle className="h-5 w-5 text-red-600" />}
+            <p className={`font-medium ${messageType === 'success' ? 'text-emerald-900' : 'text-red-900'}`}>{message}</p>
+          </div>
+        )}
+      </div>
+
       {siblingGroups.length > 0 && (
-        <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-6">
-          <h3 className="font-semibold text-blue-900 mb-4">Sibling Groups Detected</h3>
-          <div className="space-y-3">
+        <div className="rounded-[1.5rem] border border-blue-200/70 bg-gradient-to-br from-blue-50 to-white p-6 shadow-sm">
+          <h3 className="font-semibold text-blue-950">Sibling Groups Detected</h3>
+          <div className="mt-4 space-y-3">
             {siblingGroups.map((group, idx) => (
-              <div key={idx} className="bg-white rounded p-4 border border-blue-200">
-                <p className="font-semibold text-blue-900 mb-2">{group.parentName}'s Children:</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div key={idx} className="rounded-2xl border border-blue-200 bg-white p-4">
+                <p className="font-medium text-blue-950">{group.parentName}&apos;s children</p>
+                <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
                   {group.siblings.map((sibling) => (
-                    <div key={sibling.id} className="text-sm bg-blue-50 p-2 rounded">
-                      <p className="font-medium">{sibling.studentName}</p>
-                      <p className="text-xs text-muted-foreground">{sibling.class} ({sibling.block})</p>
+                    <div key={sibling.id} className="rounded-xl bg-blue-50 p-3 text-sm">
+                      <p className="font-medium text-blue-950">{sibling.studentName}</p>
+                      <p className="text-xs text-blue-700/80">{sibling.class} ({sibling.block})</p>
                     </div>
                   ))}
                 </div>
@@ -216,11 +239,10 @@ export function GateEntranceScanner() {
         </div>
       )}
 
-      {/* Recent Scans */}
-      <div className="bg-white rounded-lg border border-primary/10 shadow-sm">
-        <div className="p-6 border-b border-primary/5">
-          <h3 className="text-xl font-bold text-primary">Students at Gate</h3>
-          <p className="text-sm text-muted-foreground mt-1">Recently scanned students awaiting ground operations</p>
+      <div className="overflow-hidden rounded-[1.75rem] border border-border/60 bg-card shadow-sm">
+        <div className="border-b border-border/60 p-6">
+          <h3 className="text-xl font-semibold text-foreground">Students at Gate</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Recently scanned students awaiting ground operations.</p>
         </div>
 
         <div className="overflow-x-auto">
@@ -228,21 +250,21 @@ export function GateEntranceScanner() {
             <div className="p-8 text-center text-muted-foreground">No students at gate yet</div>
           ) : (
             <table className="w-full">
-              <thead className="bg-primary/5 border-b border-primary/10">
-                <tr className="text-left text-sm font-semibold text-primary">
+              <thead className="bg-muted/50 border-b border-border/60">
+                <tr className="text-left text-sm font-medium text-foreground">
                   <th className="px-6 py-3">Student Name</th>
                   <th className="px-6 py-3">Class</th>
                   <th className="px-6 py-3">Block</th>
                   <th className="px-6 py-3">Scan Time</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-primary/5">
+              <tbody className="divide-y divide-border/60">
                 {recentScans.map((scan) => (
-                  <tr key={scan.id} className="hover:bg-primary/2 transition-colors">
+                  <tr key={scan.id} className="hover:bg-muted/40 transition-colors">
                     <td className="px-6 py-3 font-medium">{scan.studentName}</td>
                     <td className="px-6 py-3 text-sm text-muted-foreground">{scan.class}</td>
                     <td className="px-6 py-3 text-sm">
-                      <span className="inline-flex px-2 py-1 rounded text-xs font-semibold bg-primary/10 text-primary">
+                      <span className="inline-flex rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
                         {scan.block}
                       </span>
                     </td>
