@@ -1,5 +1,3 @@
-import bcrypt from 'bcryptjs'
-
 const requireFn = eval('require') as (moduleName: string) => any
 const fs = requireFn('fs').promises as any
 const path = requireFn('path') as any
@@ -9,7 +7,7 @@ const DB_PATH = path.join(DATA_DIR, 'local-db.json')
 
 const DEFAULT_ADMIN_USERNAME = 'admin'
 const DEFAULT_ADMIN_EMAIL = 'admin@adis.ae'
-const DEFAULT_ADMIN_PASSWORD = 'Adis@2025'
+const DEFAULT_ADMIN_PASSWORD_HASH = '$2b$10$yPr0nv1mgNh.NNa77/YHl.LSpp8ruyJWBKapzWEAN0NPQBQG0uC.G'
 
 export interface LocalAdmin {
   id: number
@@ -91,13 +89,11 @@ async function createDefaultAdminIfNeeded(state: LocalDbState) {
   if (state.admin.length > 0) {
     return false
   }
-
-  const passwordHash = await bcrypt.hash(DEFAULT_ADMIN_PASSWORD, 10)
   state.admin.push({
     id: 1,
     username: DEFAULT_ADMIN_USERNAME,
     email: DEFAULT_ADMIN_EMAIL,
-    passwordHash,
+    passwordHash: DEFAULT_ADMIN_PASSWORD_HASH,
     name: 'Admin Staff',
     createdAt: new Date().toISOString(),
   })
@@ -185,4 +181,4 @@ export async function ensureDefaultAdminAccount() {
   await updateLocalDb(async () => undefined)
 }
 
-export { DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, DEFAULT_ADMIN_USERNAME, nextId, sortByCreatedAtDesc }
+export { DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_USERNAME, nextId, sortByCreatedAtDesc }

@@ -16,7 +16,7 @@ ADIS OT-Connect is a complete NFC-based student dismissal management system for 
 
 - **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS v4
 - **Backend**: Next.js Server Actions, Better Auth
-- **Database**: Neon PostgreSQL with Drizzle ORM
+- **Database**: Embedded local JSON database for self-hosted/local use
 - **UI Components**: shadcn/ui with custom styling
 - **Auth**: Better Auth (email/password, session-based)
 
@@ -77,13 +77,12 @@ The system uses the following tables:
 
 ### 1. Environment Variables
 
-Create `.env.local` with:
+The local database does not require a database URL.
+
+Optional:
 
 ```bash
-# Database (from Neon)
-DATABASE_URL=postgresql://user:password@host/dbname
-
-# Auth (generate with: openssl rand -base64 32)
+# Only needed if you still use Better Auth routes
 BETTER_AUTH_SECRET=your-secret-key-here
 ```
 
@@ -93,15 +92,10 @@ BETTER_AUTH_SECRET=your-secret-key-here
 pnpm install
 ```
 
-### 3. Run Migrations
+### 3. Database Storage
 
-The schema has already been created via the Neon MCP. Verify tables exist:
-
-```bash
-psql $DATABASE_URL -c "\dt"
-```
-
-Tables should include: `user`, `session`, `account`, `verification`, `nfc_tags`, `dismissals`, `staff_directory`
+The app stores data in `.data/local-db.json`.
+It is created automatically the first time you sign in.
 
 ### 4. Start Development Server
 
@@ -113,15 +107,8 @@ Visit `http://localhost:3000` and create an account.
 
 ### 5. Deploy to Vercel
 
-```bash
-git push
-# or
-vercel deploy
-```
-
-Set environment variables in Vercel dashboard:
-- `DATABASE_URL`: Your Neon connection string
-- `BETTER_AUTH_SECRET`: Your secret key
+This storage method is intended for local/self-hosted use.
+If you deploy to Vercel, the `.data` folder will not be persistent.
 
 ## Using the System
 

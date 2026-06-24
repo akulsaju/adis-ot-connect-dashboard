@@ -6,6 +6,8 @@
 - **Username:** `admin`
 - **Password:** `Adis@2025`
 
+The app now stores data in `.data/local-db.json` and uses the custom `/login` page.
+
 ## How to Access
 
 ### 1. Start the Application
@@ -15,8 +17,7 @@ pnpm dev
 ```
 
 ### 2. Go to Login Page
-Navigate to: `http://localhost:3000`
-- This will automatically redirect to `/login`
+Navigate to: `http://localhost:3000/login`
 
 ### 3. Enter Credentials
 - Enter `admin` as username
@@ -44,62 +45,46 @@ Once logged in, you can access all portals:
 
 ### Security
 - Password hashing with bcryptjs
-- Database-backed user storage in Neon PostgreSQL
+- Embedded local database storage
 - Session validation on each request
 - Automatic logout redirect when accessing protected pages
 
 ### Database
-- Admin user stored in `admin` table
-- Credentials: `username='admin'`, `password='[bcrypt_hashed]'`
+- Admin user stored in `.data/local-db.json`
+- Credentials: `username='admin'`, `email='admin@adis.ae'`, `password='Adis@2025'`
 
 ## Troubleshooting
 
 ### Login Not Working
 1. Verify the dev server is running: `pnpm dev`
-2. Check DATABASE_URL in `.env.local`
-3. Ensure admin user exists in database
+2. Make sure the app can write to `.data/local-db.json`
+3. Delete `.data/local-db.json` if you want the app to reseed the default admin
 
 ### Can't Access Portals
 1. You must be logged in - redirects to login page if not authenticated
 2. Log in with `admin/Adis@2025`
 
 ### Need to Change Password
-Contact your administrator to update the password hash in the admin table.
+Update the password hash in `.data/local-db.json` or add a password change flow.
 
 ## Database Setup
 
-The admin table is automatically created with:
-```sql
-CREATE TABLE admin (
-  id SERIAL PRIMARY KEY,
-  username TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL,
-  name TEXT,
-  created_at TIMESTAMP DEFAULT now()
-);
-
-INSERT INTO admin (username, password, name) 
-VALUES ('admin', '$2b$10$yPr0nv1mgNh.NNa77/YHl.LSpp8ruyJWBKapzWEAN0NPQBQG0uC.G', 'Admin Staff');
-```
+The admin account is seeded automatically into `.data/local-db.json` on first use.
 
 ## Environment Variables Required
 
 ### .env.local
 ```
-DATABASE_URL=postgresql://[user]:[password]@[host]/[database]
-BETTER_AUTH_SECRET=[optional, can be removed]
+# No database URL is required for local hosting
 ```
 
 ## API Endpoints
 
 ### Login
-- **POST** `/api/login`
-- Body: `{ username: string, password: string }`
-- Returns: Session cookie
+- Use the `/login` page and sign in with the local credentials above
 
 ### Logout
-- **POST** `/api/logout`
-- Returns: Clears session cookie
+- Use the sign out button in the sidebar
 
 ## Session Management
 

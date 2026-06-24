@@ -2,27 +2,19 @@
 
 ## Quick Start
 
-The ADIS OT-Connect system requires an admin account to access the dismissal management dashboard.
+The app now uses an embedded local database stored in `.data/local-db.json`.
+The default admin account is created automatically on first run.
 
-### Step 1: Navigate to Setup Page
+### Step 1: Open the login page
 
-1. Open your browser and go to: `http://localhost:3000/admin-setup` (or your deployed domain + `/admin-setup`)
-2. You'll see the Admin Account Setup page
+1. Open your browser and go to: `http://localhost:3000/login`
+2. Sign in with the credentials below
 
-### Step 2: Create Admin Account
+### Step 2: Login
 
-Click the **"Create Admin Account"** button. This will create an account with:
-
-- **Email:** admin@adis.ae
-- **Password:** Adis@2025
-
-### Step 3: Login
-
-1. Go to `http://localhost:3000/sign-in` (or your deployed domain + `/sign-in`)
-2. Enter the credentials:
-   - Email: `admin@adis.ae`
-   - Password: `Adis@2025`
-3. Click "Sign in"
+- **Username:** `admin`
+- **Email:** `admin@adis.ae`
+- **Password:** `Adis@2025`
 
 You'll be redirected to the Command Center dashboard.
 
@@ -30,16 +22,15 @@ You'll be redirected to the Command Center dashboard.
 
 ⚠️ **After completing setup:**
 
-1. **Delete or password-protect** `/admin-setup` page to prevent unauthorized access
-2. Change the default password immediately after first login (when available)
-3. Never commit credentials to version control
-4. Use strong, unique passwords for production deployments
+1. Change the default password if you plan to keep the local database for production use
+2. Never commit credentials to version control
+3. Use strong, unique passwords for production deployments
 
 ## Troubleshooting
 
 ### "Admin account already exists"
 
-The admin account has already been created. Just go to `/sign-in` and login with the credentials above.
+The admin account is automatically created. Just go to `/login` and sign in with the credentials above.
 
 ### "Connection error" or "Failed to create account"
 
@@ -50,9 +41,9 @@ Make sure:
 
 ### Can't login with credentials
 
-1. Make sure you're using the correct email: `admin@adis.ae`
+1. Make sure you're using the correct username or email: `admin` or `admin@adis.ae`
 2. Password is case-sensitive: `Adis@2025`
-3. Check that `.env.local` has `DATABASE_URL` and `BETTER_AUTH_SECRET` set
+3. Make sure the app can write to `.data/local-db.json`
 
 ## Dashboard Access
 
@@ -66,9 +57,5 @@ Once logged in, you can access:
 
 ## Production Deployment
 
-For production (Vercel deployment):
-
-1. Set `DATABASE_URL` and `BETTER_AUTH_SECRET` as environment variables in Vercel project settings
-2. Delete or disable the `/admin-setup` page
-3. Use a secure, complex password instead of `Adis@2025`
-4. Consider implementing two-factor authentication
+This local database approach is best for self-hosted or locally hosted deployments.
+If you deploy to Vercel, the file-based database will not persist between deployments.

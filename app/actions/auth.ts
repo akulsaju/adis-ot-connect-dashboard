@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
-import { DEFAULT_ADMIN_PASSWORD, findAdminByLogin, getAdminById, updateLocalDb } from '@/lib/local-db'
+import { findAdminByLogin, getAdminById } from '@/lib/local-db'
 
 export async function loginAdmin(username: string, password: string) {
   try {

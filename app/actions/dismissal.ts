@@ -1,7 +1,5 @@
 'use server'
 import {
-  DEFAULT_ADMIN_USERNAME,
-  findAdminByLogin,
   nextId,
   readLocalDb,
   sortByCreatedAtDesc,
