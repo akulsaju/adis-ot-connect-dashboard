@@ -2,8 +2,13 @@ const requireFn = eval('require') as (moduleName: string) => any
 const fs = requireFn('fs').promises as any
 const path = requireFn('path') as any
 
-const DATA_DIR = path.join((globalThis as any).process.cwd(), '.data')
-const DB_PATH = path.join(DATA_DIR, 'local-db.json')
+const processEnv = (globalThis as any).process?.env || {}
+const defaultDataDir = path.join((globalThis as any).process.cwd(), '.data')
+const vercelFallbackDataDir = path.join('/tmp', '.data')
+
+let DATA_DIR =
+  processEnv.LOCAL_DB_DIR?.trim() || (processEnv.VERCEL ? vercelFallbackDataDir : defaultDataDir)
+let DB_PATH = path.join(DATA_DIR, 'local-db.json')
 
 const DEFAULT_ADMIN_USERNAME = 'admin'
 const DEFAULT_ADMIN_EMAIL = 'admin@adis.ae'
@@ -82,7 +87,24 @@ function withLock<T>(task: () => Promise<T>): Promise<T> {
 }
 
 async function ensureDataDir() {
-  await fs.mkdir(DATA_DIR, { recursive: true })
+  try {
+    await fs.mkdir(DATA_DIR, { recursive: true })
+  } catch (error: any) {
+    const shouldFallbackToTmp =
+      DATA_DIR !== vercelFallbackDataDir &&
+      (error?.code === 'ENOENT' ||
+        error?.code === 'EACCES' ||
+        error?.code === 'EPERM' ||
+        error?.code === 'EROFS')
+
+    if (!shouldFallbackToTmp) {
+      throw error
+    }
+
+    DATA_DIR = vercelFallbackDataDir
+    DB_PATH = path.join(DATA_DIR, 'local-db.json')
+    await fs.mkdir(DATA_DIR, { recursive: true })
+  }
 }
 
 async function createDefaultAdminIfNeeded(state: LocalDbState) {
