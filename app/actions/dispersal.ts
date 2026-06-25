@@ -4,7 +4,7 @@ import {
   nextId,
   readLocalDb,
   updateLocalDb,
-  type DispersalGroupId,
+  type DispersalGroupId as DispersalGroupIdType,
   type DispersalSession,
   type PickupLog,
 } from '@/lib/local-db'
@@ -18,7 +18,7 @@ async function getUserId() {
   return 'admin-user-final'
 }
 
-export type { DispersalGroupId }
+export type DispersalGroupId = DispersalGroupIdType
 
 export type DispersalResult =
   | {

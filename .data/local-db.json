@@ -12,6 +12,18 @@
   "nfcTags": [],
   "dismissals": [],
   "staffDirectory": [],
-  "dispersalSessions": [],
-  "pickupLogs": []
+  "dispersalSessions": [
+    {
+      "id": "1782406264854-moa8ckkw7",
+      "groupId": "KG",
+      "startedAt": "2026-06-25T16:51:04.854Z",
+      "endedAt": null,
+      "userId": "admin-user-final",
+      "createdAt": "2026-06-25T16:51:04.854Z"
+    }
+  ],
+  "pickupLogs": [],
+  "parents": [],
+  "studentChildren": [],
+  "studentPhotos": []
 }
