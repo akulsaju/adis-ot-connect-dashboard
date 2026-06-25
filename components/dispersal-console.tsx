@@ -146,6 +146,9 @@ export function DispersalConsole() {
       } else if (!result.ok) {
         setMessage(result.error || 'Failed to start dispersal')
         setMessageType('error')
+      } else {
+        setMessage('Session created but missing session ID')
+        setMessageType('error')
       }
       setTimeout(() => setMessage(''), 3000)
     } catch (error: any) {
