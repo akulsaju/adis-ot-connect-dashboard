@@ -56,8 +56,8 @@ export default function LoginPage() {
   }
 
   const handleNfcLogin = async () => {
-    if (!nfcEnabled || userType !== 'staff' || !('NDEFReader' in window)) {
-      setError('NFC login is only available for Gate Staff')
+    if (!nfcEnabled || !('NDEFReader' in window)) {
+      setError('NFC is not available on this device')
       return
     }
 
@@ -74,14 +74,33 @@ export default function LoginPage() {
           if (record.recordType === 'text') {
             const nfcText = decoder.decode(record.data)
             
-            // Attempt login with NFC data
-            const result = await loginStaffViaCard(nfcText.trim())
-            if (result.ok) {
-              router.push('/staff-portal')
-              router.refresh()
+            if (userType === 'staff') {
+              // Attempt staff login with NFC data
+              const result = await loginStaffViaCard(nfcText.trim())
+              if (result.ok) {
+                router.push('/staff-portal')
+                router.refresh()
+              } else {
+                setError(result.error || 'Invalid NFC card for staff')
+                setLoading(false)
+              }
             } else {
-              setError(result.error || 'Invalid NFC card')
-              setLoading(false)
+              // For admin, try to parse as credentials (username.password)
+              const parts = nfcText.trim().split('.')
+              if (parts.length === 2) {
+                const [nfcUsername, nfcPassword] = parts
+                const result = await loginAdmin(nfcUsername, nfcPassword)
+                if (result.success) {
+                  router.push('/command-center')
+                  router.refresh()
+                } else {
+                  setError(result.error || 'Invalid NFC card for admin')
+                  setLoading(false)
+                }
+              } else {
+                setError('Invalid NFC card format for admin')
+                setLoading(false)
+              }
             }
             reader.abort()
             return
@@ -224,8 +243,8 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* NFC Login for Staff */}
-          {userType === 'staff' && nfcEnabled && (
+          {/* NFC Login for Both Admin and Staff */}
+          {nfcEnabled && (
             <div className="space-y-3 border-t border-border pt-5">
               <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
                 <Wifi className="h-4 w-4 text-green-500" />

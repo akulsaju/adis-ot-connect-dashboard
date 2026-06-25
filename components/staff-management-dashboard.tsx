@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { getAllStaffMembers, createStaffMember, deactivateStaffMember } from '@/app/actions/staff-auth'
-import { Copy, Trash2, Plus } from 'lucide-react'
+import { Copy, Trash2, Plus, LogIn } from 'lucide-react'
 import type { LocalStaffMember } from '@/lib/local-db'
 
 export function StaffManagementDashboard() {
+  const router = useRouter()
   const [staff, setStaff] = useState<LocalStaffMember[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [message, setMessage] = useState('')
@@ -13,6 +15,8 @@ export function StaffManagementDashboard() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [newStaffName, setNewStaffName] = useState('')
   const [newStaffRole, setNewStaffRole] = useState('gate_staff')
+  const [newStaffUsername, setNewStaffUsername] = useState('')
+  const [newStaffPassword, setNewStaffPassword] = useState('')
   const [newStaffEmail, setNewStaffEmail] = useState('')
   const [newStaffPhone, setNewStaffPhone] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -50,7 +54,10 @@ export function StaffManagementDashboard() {
         newStaffName,
         newStaffRole,
         newStaffEmail || undefined,
-        newStaffPhone || undefined
+        newStaffPhone || undefined,
+        undefined,
+        newStaffUsername || undefined,
+        newStaffPassword || undefined
       )
 
       if (result.ok) {
@@ -63,6 +70,8 @@ export function StaffManagementDashboard() {
         // Reset form
         setNewStaffName('')
         setNewStaffRole('gate_staff')
+        setNewStaffUsername('')
+        setNewStaffPassword('')
         setNewStaffEmail('')
         setNewStaffPhone('')
         setShowAddForm(false)
@@ -108,18 +117,29 @@ export function StaffManagementDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Staff Management</h1>
           <p className="text-sm text-muted-foreground">Manage gate staff accounts and NFC logins</p>
         </div>
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          <Plus className="h-4 w-4" />
-          Add Staff
-        </button>
+        <div className="flex gap-2 w-full md:w-auto">
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden md:inline">Add Staff</span>
+            <span className="md:hidden">Add</span>
+          </button>
+          <button
+            onClick={() => router.push('/login')}
+            className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2 font-medium text-foreground hover:bg-accent"
+          >
+            <LogIn className="h-4 w-4" />
+            <span className="hidden md:inline">Admin Login</span>
+            <span className="md:hidden">Login</span>
+          </button>
+        </div>
       </div>
 
       {message && (
@@ -163,6 +183,28 @@ export function StaffManagementDashboard() {
                   <option value="ground_ops">Ground Operations</option>
                   <option value="supervisor">Supervisor</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground">Username</label>
+                <input
+                  type="text"
+                  value={newStaffUsername}
+                  onChange={(e) => setNewStaffUsername(e.target.value)}
+                  disabled={isSubmitting}
+                  className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground disabled:opacity-50"
+                  placeholder="Auto-generated if empty"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground">Password</label>
+                <input
+                  type="password"
+                  value={newStaffPassword}
+                  onChange={(e) => setNewStaffPassword(e.target.value)}
+                  disabled={isSubmitting}
+                  className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground disabled:opacity-50"
+                  placeholder="Auto-generated if empty (min 6 chars)"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground">Email</label>
