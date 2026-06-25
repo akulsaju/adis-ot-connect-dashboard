@@ -39,6 +39,8 @@ export async function startDispersalSession(
   groupId: DispersalGroupId
 ): Promise<DispersalResult> {
   try {
+    const userId = await getUserId()
+    
     const result = await updateLocalDb(async (state) => {
       // Check if there's already an active session for this group
       const activeSession = state.dispersalSessions.find(
@@ -57,7 +59,7 @@ export async function startDispersalSession(
         groupId,
         startedAt: new Date().toISOString(),
         endedAt: null,
-        userId: await getUserId(),
+        userId,
         createdAt: new Date().toISOString(),
       }
 
@@ -74,7 +76,6 @@ export async function startDispersalSession(
       error: 'Failed to start dispersal session',
     }
   } catch (error: any) {
-    console.log('[v0] startDispersalSession error:', error?.message)
     return {
       ok: false,
       error: 'Failed to start dispersal session. Please try again.',
