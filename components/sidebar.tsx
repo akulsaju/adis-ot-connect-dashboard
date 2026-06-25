@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, ScanLine, MapPinned, Users, GraduationCap, LogOut, ChevronRight, Lock } from 'lucide-react'
+import { LayoutDashboard, ScanLine, MapPinned, Users, GraduationCap, LogOut, ChevronRight, Lock, UserCheck } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { logoutStaff } from '@/app/actions/staff-auth'
 
@@ -12,6 +12,7 @@ const adminNavigation = [
   { name: 'Gate Entrance', href: '/gate-entrance', icon: ScanLine },
   { name: 'Ground Operations', href: '/ground-ops', icon: MapPinned },
   { name: 'Student Registry', href: '/student-registry', icon: GraduationCap },
+  { name: 'Parent Management', href: '/parent-management', icon: UserCheck },
   { name: 'Staff Directory', href: '/staff-directory', icon: Users },
   { name: 'Staff Management', href: '/staff-management', icon: Lock },
 ]
