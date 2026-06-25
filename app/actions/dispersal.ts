@@ -67,11 +67,12 @@ export async function startDispersalSession(
       return { ok: true, message: `Dispersal started for ${groupId}`, sessionId: session.id } as DispersalResult
     })
 
-    if (result && typeof result === 'object' && 'ok' in result) {
-      return result as DispersalResult
+    // The result should contain ok and potentially sessionId
+    if (result?.ok) {
+      return result
     }
 
-    return {
+    return result || {
       ok: false,
       error: 'Failed to start dispersal session',
     }
