@@ -142,15 +142,22 @@ export async function createStaffMember(
   role: string,
   email?: string,
   phone?: string,
-  block?: string
+  block?: string,
+  customUsername?: string,
+  customPassword?: string
 ): Promise<{ ok: true; staff: LocalStaffMember; displayPassword: string } | { ok: false; error: string }> {
   if (!staffName?.trim() || !role?.trim()) {
     return { ok: false, error: 'Staff name and role are required' }
   }
 
   try {
-    const generatedPassword = generateRandomPassword()
-    const username = `staff_${Date.now()}`
+    const password = customPassword?.trim() || generateRandomPassword()
+    const username = customUsername?.trim() || `staff_${Date.now()}`
+    
+    // Validate password
+    if (password.length < 6) {
+      return { ok: false, error: 'Password must be at least 6 characters' }
+    }
 
     const result = await updateLocalDb(async (state) => {
       // Check if username already exists
@@ -162,12 +169,12 @@ export async function createStaffMember(
         id: Math.max(0, ...state.staffDirectory.map((s) => s.id)) + 1,
         staffName,
         username,
-        passwordHash: hashPassword(generatedPassword),
+        passwordHash: hashPassword(password),
         role,
         block: block || null,
         phone: phone || null,
         email: email || null,
-        nfcLoginFormat: `${username}.${generatedPassword}`,
+        nfcLoginFormat: `${username}.${password}`,
         isActive: true,
         userId: 'admin',
         lastLogin: null,
@@ -181,7 +188,7 @@ export async function createStaffMember(
     return {
       ok: true,
       staff: result,
-      displayPassword: generatedPassword,
+      displayPassword: password,
     }
   } catch (error: any) {
     console.log('[v0] createStaffMember error:', error?.message || error)

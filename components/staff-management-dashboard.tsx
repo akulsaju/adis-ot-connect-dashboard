@@ -13,6 +13,8 @@ export function StaffManagementDashboard() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [newStaffName, setNewStaffName] = useState('')
   const [newStaffRole, setNewStaffRole] = useState('gate_staff')
+  const [newStaffUsername, setNewStaffUsername] = useState('')
+  const [newStaffPassword, setNewStaffPassword] = useState('')
   const [newStaffEmail, setNewStaffEmail] = useState('')
   const [newStaffPhone, setNewStaffPhone] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -50,7 +52,10 @@ export function StaffManagementDashboard() {
         newStaffName,
         newStaffRole,
         newStaffEmail || undefined,
-        newStaffPhone || undefined
+        newStaffPhone || undefined,
+        undefined,
+        newStaffUsername || undefined,
+        newStaffPassword || undefined
       )
 
       if (result.ok) {
@@ -63,6 +68,8 @@ export function StaffManagementDashboard() {
         // Reset form
         setNewStaffName('')
         setNewStaffRole('gate_staff')
+        setNewStaffUsername('')
+        setNewStaffPassword('')
         setNewStaffEmail('')
         setNewStaffPhone('')
         setShowAddForm(false)
@@ -163,6 +170,28 @@ export function StaffManagementDashboard() {
                   <option value="ground_ops">Ground Operations</option>
                   <option value="supervisor">Supervisor</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground">Username</label>
+                <input
+                  type="text"
+                  value={newStaffUsername}
+                  onChange={(e) => setNewStaffUsername(e.target.value)}
+                  disabled={isSubmitting}
+                  className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground disabled:opacity-50"
+                  placeholder="Auto-generated if empty"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground">Password</label>
+                <input
+                  type="password"
+                  value={newStaffPassword}
+                  onChange={(e) => setNewStaffPassword(e.target.value)}
+                  disabled={isSubmitting}
+                  className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground disabled:opacity-50"
+                  placeholder="Auto-generated if empty (min 6 chars)"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground">Email</label>
