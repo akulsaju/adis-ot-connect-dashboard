@@ -22,20 +22,6 @@ const nextConfig = {
 
   // Performance optimizations
   compress: true,
-  swcMinify: true,
-
-  // Disable telemetry for local/Pi environments
-  telemetry: false,
-
-  // Turbopack configuration (Next.js 16)
-  turbo: isRaspberryPi ? {
-    // Reduce memory usage on Pi
-    memoryUsage: {
-      project: 400,
-    },
-    // Disable some heavy optimizations
-    loggingLevel: 'error',
-  } : {},
 
   // Headers for security and performance
   async headers() {
