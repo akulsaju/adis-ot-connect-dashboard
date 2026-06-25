@@ -1,3 +1,6 @@
+import { getSession } from '@/app/actions/auth'
+import { redirect } from 'next/navigation'
+import { LayoutWrapper } from '@/components/layout-wrapper'
 import { ParentManagement } from '@/components/parent-management'
 
 export const metadata = {
@@ -5,10 +8,13 @@ export const metadata = {
   description: 'Manage parents and link children for group pickups',
 }
 
-export default function ParentManagementPage() {
+export default async function ParentManagementPage() {
+  const session = await getSession()
+  if (!session) redirect('/login')
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+    <LayoutWrapper userName={session.name || 'Admin'} userType="admin">
       <ParentManagement />
-    </div>
+    </LayoutWrapper>
   )
 }
