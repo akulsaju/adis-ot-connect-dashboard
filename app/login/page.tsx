@@ -3,10 +3,12 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { loginAdmin } from '@/app/actions/auth'
+import { loginStaff } from '@/app/actions/staff-auth'
 import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
 
 export default function LoginPage() {
+  const [userType, setUserType] = useState<'admin' | 'staff'>('admin')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -19,12 +21,22 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const result = await loginAdmin(username, password)
-      if (result.success) {
-        router.push('/command-center')
-        router.refresh()
+      if (userType === 'admin') {
+        const result = await loginAdmin(username, password)
+        if (result.success) {
+          router.push('/command-center')
+          router.refresh()
+        } else {
+          setError(result.error || 'Login failed')
+        }
       } else {
-        setError(result.error || 'Login failed')
+        const result = await loginStaff(username, password)
+        if (result.ok) {
+          router.push('/staff-portal')
+          router.refresh()
+        } else {
+          setError(result.error || 'Login failed')
+        }
       }
     } catch (err) {
       setError('An error occurred')
@@ -57,11 +69,47 @@ export default function LoginPage() {
 
         <section className="p-6 sm:p-8 lg:p-10">
           <div className="mb-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Administration</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+              {userType === 'admin' ? 'Administration' : 'Gate Staff'}
+            </p>
             <h2 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">Login</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Sign in to access the command center and dismissal tools.
+              {userType === 'admin' 
+                ? 'Sign in to access the command center and dismissal tools.'
+                : 'Sign in to manage student dispersals and pickups.'}
             </p>
+          </div>
+
+          {/* Role Selector */}
+          <div className="mb-6 flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setUserType('admin')
+                setError('')
+              }}
+              className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                userType === 'admin'
+                  ? 'border-primary bg-primary text-white'
+                  : 'border-input bg-background text-foreground hover:border-primary/50'
+              }`}
+            >
+              Admin
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setUserType('staff')
+                setError('')
+              }}
+              className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                userType === 'staff'
+                  ? 'border-primary bg-primary text-white'
+                  : 'border-input bg-background text-foreground hover:border-primary/50'
+              }`}
+            >
+              Gate Staff
+            </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
