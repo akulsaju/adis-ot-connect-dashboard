@@ -56,7 +56,7 @@ export function StaffManagementDashboard() {
       if (result.ok) {
         setStaff((prev) => [...prev, result.staff])
         setMessage(
-          `Staff created! NFC Login: ${result.staff.nfcLoginFormat}`
+          `Staff account created with auto-generated password. Share NFC: ${result.staff.nfcLoginFormat}`
         )
         setMessageType('success')
         
